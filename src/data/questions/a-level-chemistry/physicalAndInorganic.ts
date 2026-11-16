@@ -1,0 +1,100 @@
+import type {
+  Question,
+  MultipleChoiceQuestion,
+  SingleCalculationQuestion,
+  MultiStepCalculationQuestion,
+  MatchingQuestion,
+  KeywordDefinitionQuestion,
+} from '../../../types';
+
+export const aLevelPhysicalAndInorganicQuestions: Question[] = [
+  // 1. pH of a Weak Monoprotic Acid (Randomised)
+  {
+    id: 'alc-ph-weak-acid',
+    type: 'calculation-multi',
+    subjectId: 'a-level-chemistry',
+    topicId: 'alc-1',
+    qualification: 'a-level',
+    difficulty: 4,
+    marks: 4,
+    assessmentObjective: 'AO2',
+    stem: 'Ethanoic acid ($CH_3COOH$) has an acid dissociation constant $K_a = 1.74 \\times 10^{-5}\\text{ mol/dm}^3$ at 298 K.\n\nCalculate the pH of a {conc} mol/dm³ aqueous solution of ethanoic acid.\nGive your answer to 2 decimal places.',
+    steps: [
+      {
+        id: 's1',
+        description: 'Set up weak acid approximation ([H+]² = Ka × [HA])',
+        equation: '[H^+]^2 = K_a \\times [HA]',
+        expectedAnswer: 2.61e-6,
+        tolerance: 0.1e-6,
+        unit: 'mol²/dm⁶',
+        marks: 1,
+      },
+      {
+        id: 's2',
+        description: 'Calculate hydrogen ion concentration ([H+] = sqrt(Ka × [HA]))',
+        equation: '[H^+] = \\sqrt{K_a \\times [HA]}',
+        expectedAnswer: 0.001616,
+        tolerance: 0.0001,
+        unit: 'mol/dm³',
+        marks: 1,
+      },
+      {
+        id: 's3',
+        description: 'Calculate pH (pH = -log10[H+])',
+        equation: '\\text{pH} = -\\log_{10}[H^+]',
+        expectedAnswer: 2.79,
+        tolerance: 0.05,
+        unit: '',
+        marks: 2,
+      },
+    ],
+    finalAnswer: 2.79,
+    tolerance: 0.05,
+    unit: '',
+    significantFigures: 3,
+    randomisable: true,
+    randomConfig: {
+      variables: [
+        { name: 'conc', min: 0.10, max: 0.30, step: 0.05, decimalPlaces: 2 },
+      ],
+      calculateAnswer: '-Math.log10(Math.sqrt(1.74e-5 * conc))',
+    },
+    workedSolution: 'Step 1 & 2: For weak acid: $[H^+] = \\sqrt{K_a \\times [HA]} = \\sqrt{1.74 \\times 10^{-5} \\times 0.15} = \\sqrt{2.61 \\times 10^{-6}} = 1.616 \\times 10^{-3}\\text{ mol/dm}^3$\nStep 3: $\\text{pH} = -\\log_{10}(1.616 \\times 10^{-3}) = 2.79$',
+    explanation: 'For a weak acid where dissociation is small, $[H^+] \\approx [A^-]$ and $[HA]_{eq} \\approx [HA]_{initial}$. Thus $K_a = \\frac{[H^+]^2}{[HA]}$.',
+    tags: ['pH', 'acids and bases', 'Ka', 'weak acids'],
+  } as MultiStepCalculationQuestion,
+
+  // 2. Transition Metals: Complex Ions & Shapes
+  {
+    id: 'alc-trans-complex',
+    type: 'matching',
+    subjectId: 'a-level-chemistry',
+    topicId: 'alc-2',
+    qualification: 'a-level',
+    difficulty: 3,
+    marks: 4,
+    assessmentObjective: 'AO1',
+    stem: 'Match each transition metal complex ion to its coordination geometry / shape and bond angle:',
+    leftItems: [
+      { id: 'octa', text: '$[Fe(H_2O)_6]^{2+}$' },
+      { id: 'tetra', text: '$[CuCl_4]^{2-}$' },
+      { id: 'sq_pl', text: 'Cisplatin $[Pt(NH_3)_2Cl_2]$' },
+      { id: 'linear', text: '$[Ag(NH_3)_2]^+$ (Tollens\' reagent)' },
+    ],
+    rightItems: [
+      { id: 'oct_shape', text: 'Octahedral (90° bond angles)' },
+      { id: 'tet_shape', text: 'Tetrahedral (109.5° bond angles)' },
+      { id: 'sq_shape', text: 'Square planar (90° bond angles)' },
+      { id: 'lin_shape', text: 'Linear (180° bond angles)' },
+    ],
+    correctPairs: [
+      ['octa', 'oct_shape'],
+      ['tetra', 'tet_shape'],
+      ['sq_pl', 'sq_shape'],
+      ['linear', 'lin_shape'],
+    ],
+    partialMarking: true,
+    explanation: '6 ligands with water form octahedral complexes. 4 bulky chloride ligands form tetrahedral $[CuCl_4]^{2-}$. Platinum(II) complexes form square planar. $[Ag(NH_3)_2]^+$ with coordination number 2 is linear.',
+    tags: ['transition metals', 'complex ions', 'ligands', 'coordination'],
+  } as MatchingQuestion,
+];

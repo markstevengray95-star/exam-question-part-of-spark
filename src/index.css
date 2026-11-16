@@ -1,0 +1,426 @@
+@import "tailwindcss";
+
+/* ─── Custom Properties ──────────────────────────────────────────── */
+:root {
+  /* SPARK Brand Colours */
+  --spark-purple: #7c3aed;
+  --spark-purple-light: #a78bfa;
+  --spark-purple-dark: #5b21b6;
+  --spark-blue: #3b82f6;
+  --spark-blue-light: #93c5fd;
+  --spark-blue-dark: #1d4ed8;
+  --spark-indigo: #6366f1;
+
+  /* Subject Colours */
+  --colour-biology: #10b981;
+  --colour-chemistry: #f59e0b;
+  --colour-physics: #3b82f6;
+  --colour-combined-science: #8b5cf6;
+
+  /* Surfaces */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-colour: #e2e8f0;
+  --shadow-colour: rgba(0, 0, 0, 0.08);
+
+  /* Calculator */
+  --calc-bg: #1e293b;
+  --calc-display: #0f172a;
+  --calc-btn: #334155;
+  --calc-btn-hover: #475569;
+  --calc-btn-op: #7c3aed;
+  --calc-btn-fn: #1d4ed8;
+}
+
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-colour: #334155;
+  --shadow-colour: rgba(0, 0, 0, 0.3);
+  --calc-bg: #0f172a;
+  --calc-display: #020617;
+  --calc-btn: #1e293b;
+  --calc-btn-hover: #334155;
+}
+
+/* ─── Base ────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Focus Rings ─────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--spark-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--spark-purple);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+
+/* ─── KaTeX ───────────────────────────────────────────────────────── */
+.katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-inline {
+  display: inline;
+}
+
+.katex-block {
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.dark .katex {
+  color: #e2e8f0;
+}
+
+/* ─── Drag and Drop ───────────────────────────────────────────────── */
+.drag-item {
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.drag-item:active {
+  cursor: grabbing;
+}
+
+.drag-item-dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
+  z-index: 50;
+}
+
+.drop-zone {
+  transition: all 0.2s ease;
+  border: 2px dashed var(--border-colour);
+  border-radius: 0.5rem;
+  min-height: 3rem;
+}
+
+.drop-zone-active {
+  border-color: var(--spark-purple);
+  background-color: rgba(124, 58, 237, 0.05);
+  transform: scale(1.02);
+}
+
+.drop-zone-hover {
+  border-color: var(--spark-purple);
+  background-color: rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.drop-zone-filled {
+  border-style: solid;
+  border-color: var(--spark-purple-light);
+  background-color: rgba(124, 58, 237, 0.05);
+}
+
+/* ─── Quiz Transitions ────────────────────────────────────────────── */
+.question-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.question-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.question-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.question-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: #ef4444; }
+  50% { border-color: transparent; }
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes correctPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease forwards;
+}
+
+.animate-correct {
+  animation: correctPop 0.4s ease;
+}
+
+.animate-incorrect {
+  animation: shake 0.4s ease;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 0.8s ease forwards;
+}
+
+/* ─── Scientific Calculator ───────────────────────────────────────── */
+.calculator-panel {
+  background: var(--calc-bg);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calc-display {
+  background: var(--calc-display);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.calc-btn {
+  background: var(--calc-btn);
+  color: #e2e8f0;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+
+.calc-btn:hover {
+  background: var(--calc-btn-hover);
+  transform: translateY(-1px);
+}
+
+.calc-btn:active {
+  transform: translateY(0);
+}
+
+.calc-btn-op {
+  background: var(--calc-btn-op);
+}
+
+.calc-btn-op:hover {
+  background: #6d28d9;
+}
+
+.calc-btn-fn {
+  background: var(--calc-btn-fn);
+  font-size: 0.8rem;
+}
+
+.calc-btn-fn:hover {
+  background: #1e40af;
+}
+
+.calc-btn-eq {
+  background: linear-gradient(135deg, var(--spark-purple), var(--spark-blue));
+}
+
+.calc-btn-eq:hover {
+  filter: brightness(1.1);
+}
+
+/* ─── Cards ───────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--shadow-colour);
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px var(--shadow-colour);
+  transform: translateY(-2px);
+}
+
+.card-interactive {
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  border-color: var(--spark-purple-light);
+}
+
+/* ─── Gradient Backgrounds ────────────────────────────────────────── */
+.gradient-spark {
+  background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #06b6d4 100%);
+}
+
+.gradient-spark-subtle {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.dark .gradient-spark-subtle {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+}
+
+.text-gradient-spark {
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Answer States ───────────────────────────────────────────────── */
+.answer-option {
+  border: 2px solid var(--border-colour);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.answer-option:hover {
+  border-color: var(--spark-purple-light);
+  background: rgba(124, 58, 237, 0.03);
+}
+
+.answer-option-selected {
+  border-color: var(--spark-purple);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.answer-option-correct {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.answer-option-incorrect {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ─── Timer Warning ───────────────────────────────────────────────── */
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.timer-warning {
+  color: #ef4444;
+  animation: timer-pulse 1s ease infinite;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ─── Utility ─────────────────────────────────────────────────────── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
