@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-wrap items-center justify-between gap-2">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
@@ -44,6 +44,9 @@ export const Header: React.FC = () => {
               <Link
                 key={link.to}
                 to={link.to}
+                aria-label={link.label}
+                aria-current={isActive ? 'page' : undefined}
+                title={link.label}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   isActive
                     ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'

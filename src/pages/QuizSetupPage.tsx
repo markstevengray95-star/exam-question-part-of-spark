@@ -34,6 +34,7 @@ export const QuizSetupPage: React.FC = () => {
   );
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<Difficulty[]>([1, 2, 3, 4, 5]);
+  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([]);
   const [questionCount, setQuestionCount] = useState<number>(mode === 'quick-fire' ? 10 : 15);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState<number>(15);
   const [showHints, setShowHints] = useState<boolean>(true);
@@ -53,11 +54,13 @@ export const QuizSetupPage: React.FC = () => {
     if (selectedQual !== 'all' && q.qualification !== selectedQual) return false;
     if (selectedSubjects.length > 0 && !selectedSubjects.includes(q.subjectId)) return false;
     if (selectedTopics.length > 0 && !selectedTopics.includes(q.topicId)) return false;
+    if (selectedTypes.length > 0 && !selectedTypes.includes(q.type)) return false;
     if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(q.difficulty)) return false;
     return true;
   });
 
   const handleSubjectToggle = (subjId: string) => {
+    setSelectedTopics([]);
     setSelectedSubjects((prev) =>
       prev.includes(subjId) ? prev.filter((id) => id !== subjId) : [...prev, subjId]
     );
@@ -76,13 +79,11 @@ export const QuizSetupPage: React.FC = () => {
   };
 
   const handleStart = () => {
-    let pool = [...matchingQuestions];
-    if (pool.length === 0) {
-      pool = [...allQuestions];
-    }
-
-    // Shuffle pool
-    pool.sort(() => Math.random() - 0.5);
+    if (matchingQuestions.length === 0) return;
+    const current = useQuizStore.getState();
+    if (current.id && !current.isComplete && !window.confirm('Start a new quiz? Your unfinished quiz will be replaced.')) return;
+    const pool = [...matchingQuestions];
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
 
     // Slice to count
     const selected = pool.slice(0, Math.min(questionCount, pool.length));
@@ -96,9 +97,9 @@ export const QuizSetupPage: React.FC = () => {
       subjectIds: selectedSubjects,
       topicIds: selectedTopics,
       difficulties: selectedDifficulties,
-      questionTypes: [],
+      questionTypes: selectedTypes,
       timeLimit: mode === 'timed-exam' ? timeLimitMinutes * 60 : undefined,
-      showHints,
+      showHints: mode !== 'timed-exam' && showHints,
       showExplanations,
       randomiseOrder: true,
     };
@@ -129,7 +130,7 @@ export const QuizSetupPage: React.FC = () => {
             <QuizCard
               mode="practice"
               title="Practice Mode"
-              description="Untimed revision with step-by-step hints and immediate feedback."
+              description="Untimed revision with hints and feedback after submission."
               badgeText="Flexible"
               selected={mode === 'practice'}
               onClick={() => {
@@ -184,7 +185,7 @@ export const QuizSetupPage: React.FC = () => {
                 <button
                   key={q}
                   type="button"
-                  onClick={() => setSelectedQual(q)}
+                  onClick={() => { setSelectedQual(q); setSelectedSubjects(prev => prev.filter(id => q === 'all' || subjects.some(s => s.id === id && s.qualification === q))); setSelectedTopics([]); }}
                   className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all ${
                     selectedQual === q
                       ? 'bg-indigo-600 text-white'
@@ -270,6 +271,7 @@ export const QuizSetupPage: React.FC = () => {
           )}
         </div>
 
+        <section className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3"><div className="flex items-center justify-between gap-2"><h2 className="text-sm font-bold">Question formats</h2><button type="button" onClick={()=>setSelectedTypes([])} className="text-xs text-indigo-600 dark:text-indigo-400">Clear</button></div><p className="text-xs text-slate-500">Choose specific formats, or leave all available. Select calculation formats to practise equations and numerical skills.</p><div className="flex flex-wrap gap-2">{Array.from(new Set(allQuestions.map(q=>q.type))).sort().map(type=><button type="button" key={type} aria-pressed={selectedTypes.includes(type)} onClick={()=>setSelectedTypes(prev=>prev.includes(type)?prev.filter(t=>t!==type):[...prev,type])} className={'px-3 py-2 rounded-lg border text-xs font-semibold '+(selectedTypes.includes(type)?'bg-indigo-600 border-indigo-600 text-white':'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>{getQuestionTypeLabel(type)}</button>)}</div></section>
         {/* 3. Difficulties & Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Difficulty Levels */}
@@ -347,7 +349,8 @@ export const QuizSetupPage: React.FC = () => {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={showHints}
+                    disabled={mode === 'timed-exam'}
+                    checked={showHints && mode !== 'timed-exam'}
                     onChange={(e) => setShowHints(e.target.checked)}
                     className="rounded accent-indigo-600"
                   />
@@ -369,15 +372,17 @@ export const QuizSetupPage: React.FC = () => {
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="text-xs text-slate-500 mb-3 text-center">
                 <strong>{matchingQuestions.length}</strong> matching questions in question bank
+                {matchingQuestions.length < questionCount && <p className="mt-1 text-amber-700 dark:text-amber-300">{matchingQuestions.length ? 'Only the available matching questions will be used.' : 'No questions match. Change the filters to continue.'}</p>}
               </div>
 
               <button
                 type="button"
                 onClick={handleStart}
-                className="w-full py-4 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-indigo-500/25 transition-all transform hover:scale-[1.01] flex items-center justify-center gap-2"
+                disabled={matchingQuestions.length === 0}
+                className="w-full py-4 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-indigo-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:scale-[1.01] flex items-center justify-center gap-2"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>Start Revision Quiz ({Math.min(questionCount, matchingQuestions.length || allQuestions.length)} Questions)</span>
+                <span>Start Revision Quiz ({Math.min(questionCount, matchingQuestions.length)} Questions)</span>
               </button>
             </div>
           </div>

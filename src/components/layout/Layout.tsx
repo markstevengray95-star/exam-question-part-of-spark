@@ -20,7 +20,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1">
-            <span>Built for the <strong>SPARK</strong> revision platform. AQA GCSE & A-Level Science engine.</span>
+            <span>Built for the <strong>SPARK</strong> revision platform. GCSE & A-level science practice.</span>
           </div>
           <div className="flex items-center gap-4 font-medium">
             <a
@@ -35,7 +35,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <span>SPARK Exam Engine Repo</span>
             </a>
             <span>•</span>
-            <span>Version 1.0.0</span>
+            <span>Version 1.1.0</span>
           </div>
         </div>
       </footer>

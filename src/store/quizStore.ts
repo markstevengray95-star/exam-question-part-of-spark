@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type {
   Question,
   QuizConfig,
@@ -28,6 +29,8 @@ interface QuizStoreState {
   isComplete: boolean;
   isPaused: boolean;
   hintsUsed: Record<string, number>;
+  flagged: string[];
+  toggleFlag: (id: string) => void;
 
   // Computed getters
   currentQuestion: () => Question | null;
@@ -64,7 +67,7 @@ function resolveTopicName(topicId: string): string {
 }
 
 // ─── Store ────────────────────────────────────────────────────────
-export const useQuizStore = create<QuizStoreState>((set, get) => ({
+export const useQuizStore = create<QuizStoreState>()(persist((set, get) => ({
   // Initial state
   id: null,
   config: null,
@@ -77,6 +80,8 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
   isComplete: false,
   isPaused: false,
   hintsUsed: {},
+  flagged: [],
+  toggleFlag: (id) => set(s => ({ flagged: s.flagged.includes(id) ? s.flagged.filter(x => x !== id) : [...s.flagged, id] })),
 
   // ── Computed getters ───────────────────────────────────────────
 
@@ -106,9 +111,11 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
   // ── Actions ────────────────────────────────────────────────────
 
   startQuiz: (config: QuizConfig, questions: Question[]) => {
-    const orderedQuestions = config.randomiseOrder
-      ? [...questions].sort(() => Math.random() - 0.5)
-      : questions;
+    const orderedQuestions = [...questions];
+    if (config.randomiseOrder) for (let i = orderedQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [orderedQuestions[i], orderedQuestions[j]] = [orderedQuestions[j], orderedQuestions[i]];
+    }
 
     set({
       id: generateId(),
@@ -122,11 +129,14 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       isComplete: false,
       isPaused: false,
       hintsUsed: {},
+      flagged: [],
     });
   },
 
   answerQuestion: (questionId: string, answer: UserAnswer) => {
+    if (get().isComplete) return;
     set((state) => ({
+      results: {},
       answers: {
         ...state.answers,
         [questionId]: {
@@ -151,12 +161,10 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
   },
 
   submitQuiz: () => {
-    const quizResults = get().calculateResults();
-    set({
-      isComplete: true,
-      endTime: Date.now(),
-    });
-    return quizResults;
+    if (get().isComplete) return get().calculateResults();
+    const { questions, answers } = get();
+    set({ results: markQuiz(questions, answers), isComplete: true, endTime: Date.now() });
+    return get().calculateResults();
   },
 
   useHint: (questionId: string) => {
@@ -188,6 +196,8 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
     if (incorrectQuestions.length === 0) return;
 
     set({
+      config: get().config ? { ...get().config!, questionCount: incorrectQuestions.length, mode: 'practice', timeLimit: undefined } : null,
+      id: generateId(),
       questions: incorrectQuestions,
       currentIndex: 0,
       answers: {},
@@ -197,6 +207,7 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       isComplete: false,
       isPaused: false,
       hintsUsed: {},
+      flagged: [],
     });
   },
 
@@ -213,11 +224,12 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       isComplete: false,
       isPaused: false,
       hintsUsed: {},
+      flagged: [],
     });
   },
 
   calculateResults: (): QuizResults => {
-    const { id, questions, answers, startTime, results: existingResults } = get();
+    const { id, questions, answers, startTime, endTime, results: existingResults } = get();
 
     // Mark all questions
     const markResults =
@@ -225,8 +237,7 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
         ? existingResults
         : markQuiz(questions, answers);
 
-    // Store results in state
-    set({ results: markResults });
+    // Pure calculation: never update the store while rendering results.
 
     // Compute totals
     let totalMarks = 0;
@@ -246,8 +257,8 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       }
     }
 
-    const percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0;
-    const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+    const percentage = maxMarks > 0 ? (totalMarks / maxMarks) : 0;
+    const timeTaken = Math.max(0, Math.floor(((endTime ?? Date.now()) - startTime) / 1000));
 
     // ── Topic breakdown ──────────────────────────────────────────
     const topicMap = new Map<string, { marks: number; maxMarks: number }>();
@@ -265,7 +276,7 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
         topicName: resolveTopicName(topicId),
         marks: data.marks,
         maxMarks: data.maxMarks,
-        percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) * 100 : 0,
+        percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) : 0,
       })
     );
 
@@ -285,7 +296,7 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       difficulty,
       marks: data.marks,
       maxMarks: data.maxMarks,
-      percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) * 100 : 0,
+      percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) : 0,
     }));
 
     // ── Type breakdown ───────────────────────────────────────────
@@ -303,7 +314,7 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
         type,
         marks: data.marks,
         maxMarks: data.maxMarks,
-        percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) * 100 : 0,
+        percentage: data.maxMarks > 0 ? (data.marks / data.maxMarks) : 0,
       })
     );
 
@@ -320,4 +331,4 @@ export const useQuizStore = create<QuizStoreState>((set, get) => ({
       incorrectQuestionIds,
     };
   },
-}));
+}), { name: 'spark-exam-session-v1', partialize: s => ({ id: s.id, config: s.config, questions: s.questions, currentIndex: s.currentIndex, answers: s.answers, results: s.results, startTime: s.startTime, endTime: s.endTime, isComplete: s.isComplete, isPaused: s.isPaused, hintsUsed: s.hintsUsed, flagged: s.flagged }) }));

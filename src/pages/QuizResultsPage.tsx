@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useQuizStore } from '../store/quizStore';
 import { ResultsChart } from '../components/quiz/ResultsChart';
@@ -23,6 +23,9 @@ export const QuizResultsPage: React.FC = () => {
   const answers = useQuizStore((s) => s.answers);
   const results = useQuizStore((s) => s.results);
   const calculateResults = useQuizStore((s) => s.calculateResults);
+  const isComplete = useQuizStore(s => s.isComplete);
+  const config = useQuizStore(s => s.config);
+  const [reviewFilter, setReviewFilter] = React.useState<'all' | 'incorrect'>('all');
   const retryIncorrect = useQuizStore((s) => s.retryIncorrect);
 
   // If no results, compute them or redirect
@@ -44,10 +47,11 @@ export const QuizResultsPage: React.FC = () => {
     );
   }
 
+  if (!isComplete) return <Navigate to="/quiz/play" replace />;
   const quizResults = calculateResults();
   const percentage = Math.round(quizResults.percentage * 100);
   const qual = questions[0]?.qualification || 'gcse';
-  const grade = getGradeFromPercentage(quizResults.percentage, qual);
+  const grade = questions.every(q => q.qualification === qual) && !questions.some(q => q.subjectId === 'gcse-combined-science') ? getGradeFromPercentage(quizResults.percentage, qual) : '—';
   const incorrectCount = quizResults.incorrectQuestionIds.length;
 
   const handleRetry = () => {
@@ -72,7 +76,7 @@ export const QuizResultsPage: React.FC = () => {
                 Exam Performance Breakdown
               </h1>
               <p className="text-purple-200 text-xs sm:text-sm max-w-lg">
-                Marked automatically against standard AQA GCSE & A-Level mark schemes.
+                Practice marks using SPARK's built-in marking rules. Grade estimates are indicative only, not official AQA boundaries.
               </p>
             </div>
 
@@ -106,7 +110,7 @@ export const QuizResultsPage: React.FC = () => {
             </div>
             <div>
               <span className="text-purple-300 block">Questions Completed</span>
-              <strong className="text-sm">{questions.length}</strong>
+              <strong className="text-sm">{Object.keys(answers).length} / {questions.length}</strong>
             </div>
             <div>
               <span className="text-purple-300 block">Marks Accuracy</span>
@@ -159,8 +163,8 @@ export const QuizResultsPage: React.FC = () => {
         />
 
         {/* Question by Question Detailed Review */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        {config?.showExplanations !== false && <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
               Detailed Question Review & Model Solutions
             </h3>
@@ -169,8 +173,10 @@ export const QuizResultsPage: React.FC = () => {
             </span>
           </div>
 
+          <div className="flex gap-2">{(['all','incorrect'] as const).map(v=><button type="button" key={v} aria-pressed={reviewFilter===v} onClick={()=>setReviewFilter(v)} className={'rounded-lg px-3 py-2 text-xs font-semibold '+(reviewFilter===v?'bg-indigo-600 text-white':'bg-slate-100 dark:bg-slate-800')}>{v==='all'?'All questions':'Needs practice ('+incorrectCount+')'}</button>)}</div>
           <div className="space-y-3">
-            {questions.map((q, idx) => (
+            {reviewFilter === 'incorrect' && incorrectCount===0 && <p className="text-sm text-slate-500">All questions achieved full marks.</p>}
+            {questions.map((q, idx) => (reviewFilter === 'incorrect' && !quizResults.incorrectQuestionIds.includes(q.id)) ? null : (
               <QuestionReview
                 key={q.id}
                 question={q}
@@ -180,7 +186,7 @@ export const QuizResultsPage: React.FC = () => {
               />
             ))}
           </div>
-        </div>
+        </div>}
       </div>
     </Layout>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useQuizStore } from '../store/quizStore';
 import { QuestionRenderer } from '../components/questions/QuestionRenderer';
@@ -36,9 +36,13 @@ export const QuizPlayPage: React.FC = () => {
   const useHint = useQuizStore((s) => s.useHint);
   const submitQuiz = useQuizStore((s) => s.submitQuiz);
 
+  const isComplete = useQuizStore(s => s.isComplete);
+  const flagged = useQuizStore(s => s.flagged);
+  const toggleFlag = useQuizStore(s => s.toggleFlag);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
 
+  if (isComplete) return <Navigate to="/quiz/results" replace />;
   // If no quiz active, redirect to setup
   if (!questions || questions.length === 0) {
     return (
@@ -59,7 +63,7 @@ export const QuizPlayPage: React.FC = () => {
   const currentQ = questions[currentIndex];
   const currentAnswer = answers[currentQ.id];
   const totalCount = questions.length;
-  const progressPercent = ((currentIndex + 1) / totalCount) * 100;
+  const progressPercent = (Object.keys(answers).length / totalCount) * 100;
   const hintsCount = hintsUsed[currentQ.id] || 0;
   const availableHints = currentQ.hints || [];
 
@@ -82,8 +86,8 @@ export const QuizPlayPage: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Top Bar: Progress, Timer, Grid */}
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-extrabold text-sm text-slate-900 dark:text-white">
                 Question {currentIndex + 1} of {totalCount}
               </span>
@@ -114,7 +118,8 @@ export const QuizPlayPage: React.FC = () => {
             </div>
           </div>
 
-          <ProgressBar progress={progressPercent} showPercentage={false} />
+          <ProgressBar progress={progressPercent} label={answeredCount + ' of ' + totalCount + ' answered'} />
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500"><span>Answers saved on this device{config?.timeLimit ? ' · timer continues if you leave' : ''}</span><button type="button" onClick={()=>toggleFlag(currentQ.id)} aria-pressed={flagged.includes(currentQ.id)} className={'px-3 py-2 rounded-lg border font-semibold '+(flagged.includes(currentQ.id)?'bg-amber-100 border-amber-300 text-amber-800':'border-slate-200 dark:border-slate-700')}>{flagged.includes(currentQ.id)?'Remove review flag':'Flag for review'}</button></div>
         </div>
 
         {/* Question Card */}
@@ -127,6 +132,7 @@ export const QuizPlayPage: React.FC = () => {
           {/* Interactive Question Component */}
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
             <QuestionRenderer
+              key={currentQ.id}
               question={currentQ}
               userAnswer={currentAnswer}
               onAnswer={(ans) => answerQuestion(currentQ.id, ans)}
@@ -171,7 +177,7 @@ export const QuizPlayPage: React.FC = () => {
         </div>
 
         {/* Navigation Controls Bar */}
-        <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center justify-between gap-2 flex-wrap p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <button
             type="button"
             disabled={currentIndex === 0}
@@ -213,7 +219,7 @@ export const QuizPlayPage: React.FC = () => {
         >
           <div className="space-y-4">
             <div className="text-xs text-slate-500">
-              Click any question number to jump directly to it:
+              Click any question number to jump directly to it. Green = answered; dot = flagged for review.
             </div>
             <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
               {questions.map((q, idx) => {
@@ -223,6 +229,7 @@ export const QuizPlayPage: React.FC = () => {
                 return (
                   <button
                     key={q.id}
+                    aria-label={'Question '+(idx+1)+(isAnswered?', answered':', unanswered')+(flagged.includes(q.id)?', flagged':'')}
                     onClick={() => {
                       useQuizStore.setState({ currentIndex: idx });
                       setIsReviewModalOpen(false);
@@ -235,7 +242,7 @@ export const QuizPlayPage: React.FC = () => {
                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <span>{idx + 1}</span>
+                    <span>{idx + 1}{flagged.includes(q.id) ? ' •' : ''}</span>
                     <span className="text-[9px] font-normal">{q.marks}m</span>
                   </button>
                 );
